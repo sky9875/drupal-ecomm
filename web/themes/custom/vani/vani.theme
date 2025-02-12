@@ -1,0 +1,231 @@
+<?php
+use Drupal\file\Entity\File;
+use Drupal\file\FileInterface;
+use Drupal\Component\Utility\UrlHelper;
+use Drupal\node\Entity\Node;
+use Drupal\views\ViewExecutable;
+use Drupal\views\Views;
+use Drupal\Component\Utility\SortArray;
+use Drupal\Component\Utility\Html;
+
+/**
+ * @file
+ * Contains Vani theme override and preprocess functions.
+ */
+
+/**
+ * Sanitise input urls.
+ */
+function santise_val_url($url) {
+	if ($url != '') {
+
+		// Sanitise (remove all illegal characters) from url.
+		$url = filter_var($url, FILTER_SANITIZE_URL);
+
+		// Validate url.
+		if (filter_var($url, FILTER_VALIDATE_URL) == TRUE) {
+			$url = $url;
+		} else {
+			$url = '#';
+		}
+		return $url;
+	}
+}
+
+/**
+ * Define variables for theme settings.
+ */
+function vani_preprocess_page(array &$variables) {
+	$config = \Drupal::config('system.site');
+	$path = getenv('FRONTEND_JSON_PATH'); 
+    //echo 'hi'; exit;
+	$variables['site_name'] = $config->get('name');
+	$variables['site_slogan'] = $config->get('slogan');
+	$variables['slider_show'] = theme_get_setting('slider_show', 'vani');
+	$variables['slider_code'] = theme_get_setting('slider_code', 'vani');
+	$variables['slider_image'] = theme_get_setting('slider_image', 'vani');
+	$variables['all_icons_show'] = theme_get_setting('all_icons_show', 'vani');
+	$variables['facebook_url'] = santise_val_url(theme_get_setting('facebook_url', 'vani'));
+	$variables['twitter_url'] = santise_val_url(theme_get_setting('twitter_url', 'vani'));
+	$variables['instagram_url'] = santise_val_url(theme_get_setting('instagram_url', 'vani'));
+	$variables['linkedin_url'] = santise_val_url(theme_get_setting('linkedin_url', 'vani'));
+	$variables['youtube_url'] = santise_val_url(theme_get_setting('youtube_url', 'vani'));
+	$variables['vimeo_url'] = santise_val_url(theme_get_setting('vimeo_url', 'vani'));
+	$variables['telegram_url'] = santise_val_url(theme_get_setting('telegram_url', 'vani'));
+	$variables['whatsapp_url'] = santise_val_url(theme_get_setting('whatsapp_url', 'vani'));
+	$variables['github_url'] = santise_val_url(theme_get_setting('github_url', 'vani'));
+	$variables['vk_url'] = santise_val_url(theme_get_setting('vk_url', 'vani'));
+	$variables['front_sidebar'] = theme_get_setting('front_sidebar', 'vani');
+	$variables['scrolltotop_on'] = theme_get_setting('scrolltotop_on', 'vani');
+	$variables['copyright_text'] = theme_get_setting('copyright_text', 'vani');
+	$variables['font_icon_fontawesome'] = theme_get_setting('font_icon_fontawesome', 'vani');
+	$variables['font_icon_material'] = theme_get_setting('font_icon_material', 'vani');
+	$variables['bootstrapicons'] = theme_get_setting('bootstrapicons');
+	$slider_image_id = theme_get_setting('slider_image', 'vani');
+	if(!empty($slider_image_id)) {
+		$slider_image_file = File::load($slider_image_id[0]);
+		$slider_image_file->status = FILE_STATUS_PERMANENT;
+		$slider_image_file->save();
+		$slider_image_file_usage = \Drupal::service('file.usage');
+		$slider_image_file_usage->add($slider_image_file, 'vani', 'theme', $slider_image_id[0]);
+	};
+	if(!empty($slider_image_file)) {
+    $imageuri = $slider_image_file->getFileUri();
+    $variables['slider_image_path'] = file_create_url($imageuri);
+	};
+}
+
+/**
+ * Node preprocess.
+ */
+function vani_preprocess_node(array &$variables) {
+	$variables['node_author_pic'] = theme_get_setting('node_author_pic');
+	$variables['node_tags'] = theme_get_setting('node_tags');
+}
+
+/* *
+ * Comment preprocess.
+ */
+function vani_preprocess_comment(array &$variables) {
+	$variables['comment_user_pic'] = theme_get_setting('comment_user_pic');
+}
+
+/**
+ * Html preprocess for Vani theme.
+ */
+function vani_preprocess_html(&$variables) {
+	$variables['base_path'] = base_path();
+	$variables['styling'] = theme_get_setting('styling');
+	$variables['google_font'] = theme_get_setting('google_font');
+	$variables['styling_code'] = theme_get_setting('styling_code');
+}
+
+/**
+ * Add current page to breadcrumb.
+ */
+function vani_preprocess_breadcrumb(&$variables) {
+	$request = \Drupal::request();
+	$route_match = \Drupal::routeMatch();
+	$page_title = \Drupal::service('title_resolver')->getTitle($request, $route_match->getRouteObject());
+	if (!empty($page_title)) {
+		$variables['breadcrumb'][] = [
+			'text' => $page_title,
+		];
+		// Add cache context based on url.
+		$variables['#cache']['contexts'][] = 'url';
+	}
+}
+
+function vani_views_post_render(ViewExecutable $view, &$output)
+{
+	$data   = [];
+   	$item   = isset(json_decode($output['#markup'], true)[0]) ? json_decode($output['#markup']->__toString(), true)[0] : [];
+    $contextual_filter_value = '';
+    if(isset($view->args[0]) && $view->args[0])
+    {
+          $contextual_filter_value = $view->args[0]; 
+          $contextual_filter_name = 'language';
+          $arguments = array($contextual_filter_name => $contextual_filter_value);
+    }
+   
+	$params = UrlHelper::filterQueryParameters(\Drupal::request()->query->all());
+	$url    = isset($params['url']) ? $params['url'] : null;
+	
+	/* contact us */
+	if ($view->id() == 'contact_us') {
+		$item1   = isset(json_decode($output['#markup'], true)[1]) ? json_decode($output['#markup']->__toString(), true)[1] : [];
+		if (!empty($item)) {
+			$data1 = [];
+			$data1['mainHeading']       		= Html::decodeEntities($item['title']);
+			$data1['contactusDesktopBanner'] 	= isset($item['field_banner']) ? getImage($item['field_banner'], $item['field_banner_1']) : null;
+			$data1['contactusMobileBanner'] 	= isset($item['field_banner_mobile']) ? getImage($item['field_banner_mobile'], $item['field_banner_mobile_1']) : null;
+			$data1['description']       		= $item['field_description'];
+			
+			$contactus_arr = [];
+			$contactus_arr[0] = array('section' => 'heroBanner','data' => array('0' => $data1));
+			
+			// if($contextual_filter_value)
+			// 	{
+			// 		$filename2 = "contact_us-".$contextual_filter_value.".json";
+			// 		convertToJson($filename2, $data);
+			// 	} 
+			$filename = "contact_us.json";
+			convertToJson($filename, $contactus_arr);			
+		}
+	sendJSON($contactus_arr);
+	}
+	/* contact us end*/
+
+}
+
+function convertToJson($filename, $data)
+{
+    $data = json_encode($data, true);
+	$path    = $_SERVER['DOCUMENT_ROOT'] . '/frontend/json_data'; //uat json saving path
+	// To save JSON file in local directory.
+    $file   = "$path/$filename";
+    $handle = @fopen($file, "w+");
+    if ($handle) {
+        fputs($handle, $data);
+        fclose($handle);
+        header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+        header('Pragma: no-cache');
+        header("Content-Type: application/json");
+        header("Content-Disposition: disposition-type=attachment; filename=\"$filename\"");
+    }
+	// echo '<pre>'; print_r($path); echo '</pre>'; exit;
+}
+
+function sendJSON($data)
+{
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($data);
+    exit(0);
+}
+
+function getImage($field_image, $field_image_alt, $multiple = false)
+{
+    $imageData = [];
+    if (!empty($field_image)) {
+        $images    = explode(',', trim($field_image));
+        $imagesAlt = explode(',', trim($field_image_alt));
+        foreach ($images as $k => $image) {
+            $alt        = $imagesAlt[$k];
+            $ext        = pathinfo($image, PATHINFO_EXTENSION);
+            if($multiple){
+                $imageData[][$ext] = ['url' => $image, 'alt' => $alt];
+            }else{
+                $imageData[$ext] = ['url' => $image, 'alt' => $alt];
+            }
+        }
+    }
+    return $imageData;
+}
+
+function getParagraphUrl($images, $multiple = false)
+{
+    $data = [];
+    if (!empty($images)) {
+        foreach ($images as $image) {
+            $iconImage       = File::load($image['target_id']);
+            $iconImageUri    = $iconImage->uri->value;
+            $iconUri         = empty($iconImageUri) ? null : file_create_url($iconImageUri);
+            $ext             = pathinfo($iconUri, PATHINFO_EXTENSION);
+
+            if($multiple){
+                if (isset($image['alt'])) {
+                    $data[][$ext]  = ['url' => $iconUri, 'alt' => $image['alt']];
+                } else {
+                    $data[][$ext]  = $iconUri;
+                }
+            }else{
+                if (isset($image['alt'])) {
+                    $data[$ext]  = ['url' => $iconUri, 'alt' => $image['alt']];
+                } else {
+                    $data[$ext]  = $iconUri;
+                }
+            }
+        }
+    }
+    return $data;
+}

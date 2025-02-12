@@ -1,0 +1,48 @@
+<?php
+
+use Drupal\file\Entity\File;
+
+/**
+ * Implements hook_file_insert().
+ *
+ * This function is called when a file is uploaded.
+ */
+function custom_module_file_insert(File $file) {
+  // Get the original filename.
+  $original_filename = $file->getFilename();
+
+  // Call the function to clean the filename.
+  $new_filename = custom_module_clean_filename($original_filename);
+
+  // If the filename has changed, update the file name.
+  if ($original_filename !== $new_filename) {
+    // Set the new filename.
+    $file->setFilename($new_filename);
+    
+    // Save the file object with the new name.
+    $file->save();
+  }
+}
+
+/**
+ * Cleans the filename by removing special characters and spaces.
+ *
+ * @param string $filename
+ *   The original filename.
+ *
+ * @return string
+ *   The cleaned filename.
+ */
+function custom_module_clean_filename($filename) {
+  // Remove special characters and spaces.
+  // This regex removes anything except for letters, numbers, underscores, hyphens, and periods.
+  $new_filename = preg_replace('/[^a-zA-Z0-9_\-\.]/', '_', $filename);
+
+  // Ensure the filename is lowercase.
+  $new_filename = strtolower($new_filename);
+
+  // Optionally, you can truncate the filename to a specific length (e.g., 255 characters).
+  $new_filename = substr($new_filename, 0, 255);
+
+  return $new_filename;
+}
