@@ -1,8 +1,0 @@
-custom_module.upload_file:
-  path: '/upload-file'
-  defaults:
-    _controller: 'Drupal\custom_module\Controller\CustomController::uploadFile'
-    _title: 'Upload File'
-  requirements:
-    _access: 'TRUE'
-  methods: ['POST']
