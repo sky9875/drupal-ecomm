@@ -1,6 +1,0 @@
-name: Custom Module
-type: module
-description: This module is used for API calling
-package: custom
-core: 10.x
-core_version_requirement: ^10 || ^11
