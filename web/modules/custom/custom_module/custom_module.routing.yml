@@ -1,8 +1,7 @@
-custom_module.upload_file:
-  path: '/upload-file'
+custom_module.upload_image:
+  path: '/image/upload'
   defaults:
-    _controller: 'Drupal\custom_module\Controller\CustomController::uploadFile'
-    _title: 'Upload File'
+    _controller: 'Drupal\custom_module\Controller\CustomController::uploadImage'
+    _title: 'Upload Image'
   requirements:
-    _access: 'TRUE'
-  methods: ['POST']
+    _permission: 'access content'
